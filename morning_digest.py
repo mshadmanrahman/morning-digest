@@ -11,11 +11,30 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-TZ = ZoneInfo("Europe/Stockholm")
-PERSONAL_CAL = "connectshadman@gmail.com"
-WORK_CAL = "k5amq2b5457n0v0mspai32pqn2umqp7s@import.calendar.google.com"
+APP_DIR = Path.home() / ".morning-digest"
+CONFIG_PATH = APP_DIR / "config.json"
 OPENCLAW_CONFIG = Path.home() / ".openclaw" / "openclaw.json"
 BRAVE_API = "https://api.search.brave.com/res/v1/web/search"
+DEFAULT_CONFIG = {
+    "name": "Your Name",
+    "timezone": "Europe/Stockholm",
+    "calendars": [
+        {"label": "Personal", "id": "your-personal-calendar-id@example.com"},
+        {"label": "Work", "id": "your-work-calendar-id@example.com"},
+    ],
+    "gmail_queries": [
+        "in:inbox is:unread is:important",
+        "in:inbox is:unread category:primary",
+        "in:inbox is:unread",
+    ],
+    "news": {
+        "ai_query": "AI news OR artificial intelligence latest developments",
+        "product_query": "product launch OR product update OR release notes SaaS software",
+        "local_query": "Sweden OR Uppsala important local news",
+        "local_label": "SWEDEN + UPPSALA (only if material)",
+        "local_keywords": ["uppsala", "sweden", "swedish", "stockholm"],
+    },
+}
 
 
 def run(cmd):
@@ -25,8 +44,77 @@ def run(cmd):
     return p.stdout
 
 
-def now_local():
-    return datetime.now(TZ)
+def clean_title(title):
+    return title.replace("&#39;", "'").replace("&amp;", "&")
+
+
+def clean_summary(text, max_len=180):
+    text = re.sub(r"\s+", " ", (text or "").strip())
+    if len(text) <= max_len:
+        return text
+    cut = text[:max_len].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return cut + "…"
+
+
+def prompt(label, default=""):
+    suffix = f" [{default}]" if default else ""
+    value = input(f"{label}{suffix}: ").strip()
+    return value or default
+
+
+def ensure_config_dir():
+    APP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def write_config(config):
+    ensure_config_dir()
+    CONFIG_PATH.write_text(json.dumps(config, indent=2) + "\n")
+
+
+def setup_wizard():
+    print("Morning Digest setup")
+    print("This will create a local config at ~/.morning-digest/config.json\n")
+
+    config = json.loads(json.dumps(DEFAULT_CONFIG))
+    config["name"] = prompt("Your name", config["name"])
+    config["timezone"] = prompt("Timezone", config["timezone"])
+
+    print("\nCalendar setup")
+    config["calendars"][0]["label"] = prompt("Calendar 1 label", "Personal")
+    config["calendars"][0]["id"] = prompt("Calendar 1 id")
+    config["calendars"][1]["label"] = prompt("Calendar 2 label", "Work")
+    config["calendars"][1]["id"] = prompt("Calendar 2 id")
+
+    print("\nLocal news setup")
+    config["news"]["local_label"] = prompt("Local news section label", config["news"]["local_label"])
+    local_query = prompt("Local news search query", config["news"]["local_query"])
+    config["news"]["local_query"] = local_query
+    keywords = prompt("Local relevance keywords (comma-separated)", ", ".join(config["news"]["local_keywords"]))
+    config["news"]["local_keywords"] = [k.strip().lower() for k in keywords.split(",") if k.strip()]
+
+    write_config(config)
+    print(f"\nSaved config to {CONFIG_PATH}")
+    print("Run `python3 morning_digest.py` to generate your digest.")
+
+
+def load_config():
+    if not CONFIG_PATH.exists():
+        raise FileNotFoundError(
+            f"Config not found: {CONFIG_PATH}. Run `python3 morning_digest.py --setup` first."
+        )
+    return json.loads(CONFIG_PATH.read_text())
+
+
+def brave_api_key():
+    try:
+        cfg = json.loads(OPENCLAW_CONFIG.read_text())
+        return cfg["tools"]["web"]["search"]["apiKey"]
+    except Exception:
+        return None
+
+
+def now_local(tz):
+    return datetime.now(tz)
 
 
 def end_of_tomorrow(n):
@@ -61,27 +149,27 @@ def fetch_calendar(cal_id, start_iso, end_iso):
     return []
 
 
-def parse_dt(obj):
+def parse_dt(obj, tz):
     if not obj:
         return None
     if "dateTime" in obj:
-        return datetime.fromisoformat(obj["dateTime"]).astimezone(TZ)
+        return datetime.fromisoformat(obj["dateTime"]).astimezone(tz)
     if "date" in obj:
-        return datetime.fromisoformat(obj["date"] + "T00:00:00").replace(tzinfo=TZ)
+        return datetime.fromisoformat(obj["date"] + "T00:00:00").replace(tzinfo=tz)
     return None
 
 
-def format_events(events):
+def format_events(events, tz):
     rows = []
     for e in events:
-        start = parse_dt(e.get("start"))
-        end = parse_dt(e.get("end"))
+        start = parse_dt(e.get("start"), tz)
+        end = parse_dt(e.get("end"), tz)
         if not start or not end:
             continue
         title = (e.get("summary") or "Untitled").strip()
         note = None
         loc = (e.get("location") or "").strip()
-        if loc and loc not in ("Microsoft Teams Meeting",) and "Stockholm, Stockholm, SE" not in loc:
+        if loc and loc not in ("Microsoft Teams Meeting",):
             note = loc
         line = f"• {start:%H:%M}–{end:%H:%M} {title}"
         if note:
@@ -91,12 +179,7 @@ def format_events(events):
     return [line for _, line in rows]
 
 
-def fetch_gmail():
-    queries = [
-        'in:inbox is:unread is:important',
-        'in:inbox is:unread category:primary',
-        'in:inbox is:unread',
-    ]
+def fetch_gmail(queries):
     seen = set()
     out = []
     for q in queries:
@@ -140,26 +223,6 @@ def fetch_rss(query, limit):
     return items
 
 
-def brave_api_key():
-    try:
-        cfg = json.loads(OPENCLAW_CONFIG.read_text())
-        return cfg["tools"]["web"]["search"]["apiKey"]
-    except Exception:
-        return None
-
-
-def clean_title(title):
-    return title.replace("&#39;", "'").replace("&amp;", "&")
-
-
-def clean_summary(text, max_len=180):
-    text = re.sub(r"\s+", " ", (text or "").strip())
-    if len(text) <= max_len:
-        return text
-    cut = text[:max_len].rsplit(" ", 1)[0].rstrip(" ,;:-")
-    return cut + "…"
-
-
 def fetch_brave_news(query, count):
     key = brave_api_key()
     if not key:
@@ -168,7 +231,6 @@ def fetch_brave_news(query, count):
         "q": query,
         "count": count,
         "freshness": "pd",
-        "country": "SE",
         "search_lang": "en",
     })
     req = urllib.request.Request(
@@ -222,19 +284,25 @@ def section_bullets(items):
     return lines
 
 
-def main():
-    n = now_local()
+def build_digest(config):
+    tz = ZoneInfo(config["timezone"])
+    n = now_local(tz)
     start_iso = n.isoformat()
     end_iso = end_of_tomorrow(n).isoformat()
 
-    personal = format_events(fetch_calendar(PERSONAL_CAL, start_iso, end_iso))
-    work = format_events(fetch_calendar(WORK_CAL, start_iso, end_iso))
-    gmail = fetch_gmail()
-    ai_news = fetch_brave_news('AI news OR artificial intelligence latest developments', 3)
+    calendar_sections = []
+    for cal in config["calendars"]:
+        events = format_events(fetch_calendar(cal["id"], start_iso, end_iso), tz)
+        calendar_sections.append((cal["label"], events or ["No events found"]))
+
+    gmail = fetch_gmail(config.get("gmail_queries") or DEFAULT_CONFIG["gmail_queries"])
+    news_cfg = config.get("news") or {}
+
+    ai_news = fetch_brave_news(news_cfg.get("ai_query", DEFAULT_CONFIG["news"]["ai_query"]), 3)
     if len(ai_news) < 3:
         ai_news.extend([x for x in fetch_rss('artificial intelligence OR AI when:2d', 3) if x[1] not in {u for _, u, *_ in ai_news}][: 3 - len(ai_news)])
 
-    product_news = fetch_brave_news('product launch OR product update OR release notes SaaS software', 2)
+    product_news = fetch_brave_news(news_cfg.get("product_query", DEFAULT_CONFIG["news"]["product_query"]), 2)
     if len(product_news) < 2:
         extra = fetch_rss('(product launch OR product update OR release notes OR SaaS) when:7d', 5)
         seen = {u for _, u, *_ in product_news}
@@ -245,18 +313,20 @@ def main():
             if len(product_news) >= 2:
                 break
 
-    sweden = fetch_brave_news('Sweden OR Uppsala important local news', 3)
-    if len(sweden) < 1:
-        sweden = fetch_rss('(Uppsala OR Sweden) when:2d', 3)
+    local_query = news_cfg.get("local_query", DEFAULT_CONFIG["news"]["local_query"])
+    local_label = news_cfg.get("local_label", DEFAULT_CONFIG["news"]["local_label"])
+    local_keywords = [k.lower() for k in (news_cfg.get("local_keywords") or DEFAULT_CONFIG["news"]["local_keywords"])]
+    local_news = fetch_brave_news(local_query, 3)
+    if len(local_news) < 1:
+        local_news = fetch_rss(local_query, 3)
 
     lines = []
-    lines.append(f"Shadman's Morning Digest {n:%a %b} {n.day}, {n:%H:%M} (Stockholm)")
+    lines.append(f"{config['name']}'s Morning Digest {n:%a %b} {n.day}, {n:%H:%M} ({config['timezone'].split('/')[-1]})")
     lines.append("")
-    lines.append("CALENDAR (next 24h; checked 2 calendars)")
-    lines.append("Personal")
-    lines.extend(personal or ["No events found"])
-    lines.append("Work")
-    lines.extend(work or ["No events found"])
+    lines.append(f"CALENDAR (next 24h; checked {len(calendar_sections)} calendars)")
+    for label, events in calendar_sections:
+        lines.append(label)
+        lines.extend(events)
     lines.append("")
     lines.append("GMAIL (top 5 important unread)")
     lines.extend(gmail or ["• No unread inbox messages returned"])
@@ -267,24 +337,30 @@ def main():
     lines.append("PRODUCT NEWS (2 items)")
     lines.extend(section_bullets(product_news[:2]))
 
-    material_sweden = []
-    for item in sweden:
-        t, u = item[0], item[1]
-        lt = t.lower()
-        if any(x in lt for x in ["uppsala", "sweden", "swedish", "stockholm"]):
-            material_sweden.append(item)
-    if material_sweden:
+    material_local = []
+    for item in local_news:
+        t = item[0].lower()
+        if any(x in t for x in local_keywords):
+            material_local.append(item)
+    if material_local:
         lines.append("")
-        lines.append("SWEDEN + UPPSALA (only if material)")
-        lines.extend(section_bullets(material_sweden[:3]))
+        lines.append(local_label)
+        lines.extend(section_bullets(material_local[:3]))
 
-    out = "\n".join(lines).strip()
-    print(out[:2500])
+    return "\n".join(lines).strip()[:4000]
+
+
+def main():
+    if "--setup" in sys.argv:
+        setup_wizard()
+        return
+    config = load_config()
+    print(build_digest(config))
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"Shadman's Morning Digest {datetime.now(TZ):%a %b} {datetime.now(TZ).day}, {datetime.now(TZ):%H:%M} (Stockholm)\n\nGMAIL (top 5 important unread)\n• No unread inbox messages returned\n\nPRODUCT NEWS (2 items)\n• Digest script error: {e}", file=sys.stdout)
-        sys.exit(0)
+        print(f"Morning Digest error: {e}", file=sys.stdout)
+        sys.exit(1)

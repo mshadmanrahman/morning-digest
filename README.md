@@ -1,76 +1,120 @@
 # morning-digest
 
-A lightweight morning digest generator for busy professionals and PMs.
+A lightweight morning digest generator for PMs and busy professionals.
 
-It pulls together:
-- calendar events for the next 24 hours
-- important unread Gmail items
+It creates one compact text digest with:
+- your next 24 hours of calendar events
+- important unread Gmail messages
 - AI news with short TL;DRs
 - product news with short TL;DRs
-- Sweden + Uppsala news with short TL;DRs when material
+- local news with short TL;DRs when material
 
-The output is plain text, optimized for chat delivery.
+## What makes it usable
 
-## Who this is for
+You do **not** need to edit the script to get started.
 
-This is useful if you want one compact morning briefing before the day starts, especially if you:
-- manage a busy calendar
-- want fast signal from inbox + news
-- prefer a digest in Telegram or another messaging app
-- do not want to manually scan five different places every morning
+On first run, it prompts you for:
+- your name
+- your timezone
+- your calendar labels + calendar IDs
+- your local-news query and keywords
 
-## What it does
+It saves that setup to:
+- `~/.morning-digest/config.json`
 
-The script currently:
-- reads Google Calendar data via `gog`
-- reads Gmail via `gog`
-- uses Brave Search API for web/news summaries when available
-- falls back to RSS/news sources where needed
-- formats everything into a single structured digest
+After that, the digest is ready to run daily.
 
-## Example sections
+## Quick start
 
-- `CALENDAR (next 24h; checked 2 calendars)`
-- `GMAIL (top 5 important unread)`
-- `AI NEWS (3 items)`
-- `PRODUCT NEWS (2 items)`
-- `SWEDEN + UPPSALA (only if material)`
+### 1. Install requirements
 
-## Requirements
-
+You need:
 - Python 3.11+
-- [`gog`](https://github.com/shadmanrahman/gog) or equivalent Google Workspace CLI configured locally
-- Brave Search API key available in OpenClaw config at:
-  - `~/.openclaw/openclaw.json`
+- `gog` configured for your Google account
+- a Brave Search API key available in OpenClaw config at `~/.openclaw/openclaw.json`
 
-## Config assumptions
+### 2. Run the setup wizard
 
-This script currently assumes:
-- personal calendar id: `connectshadman@gmail.com`
-- work calendar id: `k5amq2b5457n0v0mspai32pqn2umqp7s@import.calendar.google.com`
-- timezone: `Europe/Stockholm`
+```bash
+python3 morning_digest.py --setup
+```
 
-You should edit those constants near the top of the script for your own setup.
+You’ll be prompted for your personal details and calendar setup.
 
-## Usage
+### 3. Generate your digest
 
 ```bash
 python3 morning_digest.py
 ```
 
-## Output style
+## Example setup prompts
 
-The digest is designed for messaging apps and includes:
-- event bullets
-- concise Gmail bullets
-- news headlines
-- short TL;DR lines under each news item
+- Your name
+- Timezone
+- Calendar 1 label
+- Calendar 1 id
+- Calendar 2 label
+- Calendar 2 id
+- Local news section label
+- Local news search query
+- Local relevance keywords
+
+## Config file
+
+The script stores a local config here:
+
+```bash
+~/.morning-digest/config.json
+```
+
+Example:
+
+```json
+{
+  "name": "Shadman",
+  "timezone": "Europe/Stockholm",
+  "calendars": [
+    { "label": "Personal", "id": "your-personal-calendar-id@example.com" },
+    { "label": "Work", "id": "your-work-calendar-id@example.com" }
+  ],
+  "gmail_queries": [
+    "in:inbox is:unread is:important",
+    "in:inbox is:unread category:primary",
+    "in:inbox is:unread"
+  ],
+  "news": {
+    "ai_query": "AI news OR artificial intelligence latest developments",
+    "product_query": "product launch OR product update OR release notes SaaS software",
+    "local_query": "Sweden OR Uppsala important local news",
+    "local_label": "SWEDEN + UPPSALA (only if material)",
+    "local_keywords": ["uppsala", "sweden", "swedish", "stockholm"]
+  }
+}
+```
+
+## Output format
+
+The digest includes these sections:
+- `CALENDAR`
+- `GMAIL`
+- `AI NEWS`
+- `PRODUCT NEWS`
+- local news section of your choice
+
+Each news item includes:
+- headline
+- URL
+- short `TL;DR`
 
 ## Notes
 
-This is intentionally simple and hackable.
+This project is intentionally simple and easy to fork.
 
-It is not a general-purpose packaged product yet. It is a practical script you can fork and adapt for your own workflow.
+It is best for people who already have:
+- Google Calendar
+- Gmail
+- a terminal workflow
+- a messaging or automation layer they want to plug this into
 
 ## License
 
