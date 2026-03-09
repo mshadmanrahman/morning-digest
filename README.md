@@ -9,6 +9,16 @@ It creates one compact text digest with:
 - product news with short TL;DRs
 - local news with short TL;DRs when material
 
+## Why this exists
+
+If your mornings start with too many tabs, too many inbox checks, and too much context switching, this script gives you one clean briefing instead.
+
+It is built for people who want:
+- a fast view of the day ahead
+- inbox signal without scanning everything
+- a lightweight intelligence brief
+- something simple enough to self-host and tweak
+
 ## What makes it usable
 
 You do **not** need to edit the script to get started.
@@ -30,10 +40,23 @@ After that, the digest is ready to run daily.
 
 You need:
 - Python 3.11+
-- `gog` configured for your Google account
+- [`gog`](https://github.com/shadmanrahman/gog) configured for your Google account
 - a Brave Search API key available in OpenClaw config at `~/.openclaw/openclaw.json`
 
-### 2. Run the setup wizard
+### 2. Make sure `gog` works
+
+Before using the digest, make sure your Google tooling is already authenticated.
+
+For example:
+
+```bash
+gog calendar list --json
+gog gmail labels --json
+```
+
+If those work, the digest will usually work too.
+
+### 3. Run the setup wizard
 
 ```bash
 python3 morning_digest.py --setup
@@ -41,7 +64,7 @@ python3 morning_digest.py --setup
 
 You’ll be prompted for your personal details and calendar setup.
 
-### 3. Generate your digest
+### 4. Generate your digest
 
 ```bash
 python3 morning_digest.py
@@ -92,29 +115,47 @@ Example:
 }
 ```
 
-## Output format
+## Sample output
 
-The digest includes these sections:
-- `CALENDAR`
-- `GMAIL`
-- `AI NEWS`
-- `PRODUCT NEWS`
-- local news section of your choice
+```text
+Shadman's Morning Digest Tue Mar 10, 07:30 (Stockholm)
 
-Each news item includes:
-- headline
-- URL
-- short `TL;DR`
+CALENDAR (next 24h; checked 2 calendars)
+Personal
+• 08:30–09:00 Dentist appointment
+Work
+• 09:35–10:00 Team standup
+• 13:00–14:00 Product review
+
+GMAIL (top 5 important unread)
+• Stripe: New login detected — worth checking in case it was not you
+
+AI NEWS (3 items)
+• OpenAI launches new enterprise workflow tools: https://example.com/story
+  TL;DR: OpenAI introduced new workflow and admin controls aimed at larger teams managing internal AI usage.
+
+PRODUCT NEWS (2 items)
+• Notion rolls out new AI meeting notes: https://example.com/story
+  TL;DR: The update focuses on summarization, action items, and faster follow-up after team meetings.
+
+LOCAL NEWS (only if material)
+• Major transit disruption in your city: https://example.com/story
+  TL;DR: Morning commuters may face delays due to infrastructure maintenance and reduced service.
+```
+
+## Best use cases
+
+This is especially useful if you are:
+- a PM managing a busy cross-functional calendar
+- a founder or operator juggling meetings, inbox, and market awareness
+- a consultant or executive who wants one message instead of five dashboards
+- anyone building a personal daily briefing workflow
 
 ## Notes
 
 This project is intentionally simple and easy to fork.
 
-It is best for people who already have:
-- Google Calendar
-- Gmail
-- a terminal workflow
-- a messaging or automation layer they want to plug this into
+It is not trying to be a giant SaaS product. It is a practical, hackable script you can adapt to your own workflow and automation stack.
 
 ## License
 
