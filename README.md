@@ -157,6 +157,17 @@ This project is intentionally simple and easy to fork.
 
 It is not trying to be a giant SaaS product. It is a practical, hackable script you can adapt to your own workflow and automation stack.
 
+## Part of the PM Toolkit Family
+
+Open-source tools for PMs who ship with AI:
+
+| Tool | What it does |
+|------|-------------|
+| [PM Pilot](https://github.com/mshadmanrahman/pm-pilot) | 20 skills, 5 agents for product managers using Claude Code |
+| [Bug Shepherd](https://github.com/mshadmanrahman/bug-shepherd) | Zero-code bug triage with parallel AI agents |
+| [Tech-to-PM Translator](https://github.com/mshadmanrahman/tech-to-pm-translator) | Convert developer docs into PM-friendly knowledge bases |
+| **Morning Digest** | **You are here** |
+
 ## License
 
 MIT
