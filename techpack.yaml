@@ -1,8 +1,5 @@
 schemaVersion: 1
-
-identifier: mshadmanrahman/morning-digest
-name: Morning Digest
+identifier: morning-digest
+displayName: Morning Digest
 description: "AI-powered morning briefing: calendar, email, Slack, and action items in one digest."
-author: Shadman Rahman
-version: 1.0.0
-license: MIT
+author: "Shadman Rahman"
