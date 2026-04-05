@@ -1,5 +1,9 @@
 # morning-digest
 
+<p align="center">
+  <img src="assets/hero.png" alt="Morning Digest" width="720" />
+</p>
+
 You know that feeling when it's 8:47am and you've already opened six different apps and you still don't know what your day actually looks like?
 
 You checked calendar. Then Gmail. Then Slack. Then a news tab. Then another. You're already behind before you've done a single thing.
