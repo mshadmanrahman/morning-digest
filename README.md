@@ -1,6 +1,10 @@
 # morning-digest
 
 <p align="center">
+  <a href="https://github.com/mshadmanrahman/morning-digest/stargazers"><img src="https://img.shields.io/github/stars/mshadmanrahman/morning-digest?style=social" alt="GitHub stars" /></a>
+</p>
+
+<p align="center">
   <img src="assets/hero.png" alt="Morning Digest" width="720" />
 </p>
 
@@ -207,18 +211,18 @@ It is the kind of tool you own completely. Fork it, tweak the queries, swap in d
 
 ---
 
-## Part of the PM Toolkit Family
+## Support
 
-Open-source tools for PMs and builders who work with AI every day.
+If this saved you time, give it a star -- it helps others find it and keeps development going.
 
-| Tool | What it does |
-|------|-------------|
-| [pm-pilot](https://github.com/mshadmanrahman/pm-pilot) | Claude Code configured for PMs. Meeting prep, PRDs, market sizing — 25 skills, ready to install. |
-| [bug-shepherd](https://github.com/mshadmanrahman/bug-shepherd) | Zero-code bug triage for PMs. Reproduce and sync bugs without reading a line of code. |
-| [tech-to-pm-translator](https://github.com/mshadmanrahman/tech-to-pm-translator) | Turns developer docs into PM language. Structured knowledge bases, not summaries. |
-| [claudecode-guide](https://github.com/mshadmanrahman/claudecode-guide) | The friendly guide to Claude Code. Zero jargon — from first install to daily operating system. |
-| [root-kg](https://github.com/mshadmanrahman/root-kg) | Your knowledge graph. Ask questions across all your notes, meetings, and emails — cited answers in plain English. |
-| **morning-digest** | **You are here** |
+## See Also
+
+- **[pm-pilot](https://github.com/mshadmanrahman/pm-pilot)** -- Claude Code configured for PMs. Meeting prep, PRDs, market sizing -- 25 skills, ready to install.
+- **[root-kg](https://github.com/mshadmanrahman/root-kg)** -- Personal knowledge graph. Ask questions across all your notes, meetings, and emails.
+- **[discovery-md](https://github.com/mshadmanrahman/discovery-md)** -- AI product discovery for PMs.
+- **[ceremonies](https://github.com/mshadmanrahman/ceremonies)** -- Agile ceremonies that don't suck.
+- **[claudecode-guide](https://github.com/mshadmanrahman/claudecode-guide)** -- Friendly guide to Claude Code. Also at [claudecodeguide.dev](https://claudecodeguide.dev).
+- **[riff](https://github.com/mshadmanrahman/riff)** -- LinkedIn engagement assistant. Extract posts and comments for AI-drafted replies.
 
 ---
 
